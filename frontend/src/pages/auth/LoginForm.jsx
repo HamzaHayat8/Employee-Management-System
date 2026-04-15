@@ -71,7 +71,7 @@ function LoginForm({ role, title, subtitle }) {
         {/* Button */}
         <Button
           type="submit"
-          className="w-full py-5.5 rounded-lg bg-[#1E1A4D] text-white 
+          className="w-full py-5 rounded-lg bg-[#1E1A4D] text-white 
           hover:bg-[#2a2566] active:scale-[0.98] transition-all"
         >
           Login
