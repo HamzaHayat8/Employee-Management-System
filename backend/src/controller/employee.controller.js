@@ -19,7 +19,7 @@ export const getAllEmployees = asyncHandler(async (req, res) => {
 });
 
 /*
-@des update employee by id
+@desc update employee by id
 */
 export const updateEmployeeById = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -88,6 +88,6 @@ export const deleteEmployeeById = asyncHandler(async (req, res) => {
   return res.status(200).json({
     success: true,
     message: "Employee deleted successfully",
-    data: deletedEmployee,
+    data: { id: deletedEmployee._id },
   });
 });

@@ -4,7 +4,8 @@ import { BsCurrencyDollar } from "react-icons/bs";
 import { FaRegCalendar, FaRegClipboard } from "react-icons/fa6";
 import { LiaTasksSolid } from "react-icons/lia";
 
-function EmployeeDashboard() {
+function EmployeeDashboard({ data }) {
+  console.log("employee data", data);
   const Carddata = [
     {
       id: 1,
@@ -35,10 +36,10 @@ function EmployeeDashboard() {
   return (
     <div className="w-ful">
       <h1 className="text-xl font-medium tracking-tight">
-        Welcome, Hamza Hayat !
+        Welcome, {data?.first_name} {data?.last_name} !
       </h1>
       <p className="text-zinc-600 text-[12px]">
-        Software Developer - Engineering
+        {data?.position}
       </p>
 
       {/* Cards */}

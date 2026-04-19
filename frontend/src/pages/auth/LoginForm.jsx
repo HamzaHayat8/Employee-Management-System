@@ -1,11 +1,21 @@
+import { useLoginMutation } from "../../services/auth/authApi";
 import { Button } from "../../components/common/button";
-import React from "react";
+import React, { useEffect } from "react";
 import { FaArrowLeftLong, FaEyeLowVision } from "react-icons/fa6";
 import { IoIosEye } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../../features/auth/authSlice";
+import toast from "react-hot-toast";
 
 function LoginForm({ role, title, subtitle }) {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [showPassword, setShowPassword] = React.useState(false);
+
+  const [login, { isLoading, isError, error, isSuccess, data: response }] =
+    useLoginMutation();
 
   const [data, setData] = React.useState({
     email: "",
@@ -18,7 +28,17 @@ function LoginForm({ role, title, subtitle }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(data);
+    login({ ...data, role })
+      .unwrap()
+      .then((res) => {
+        if (res.employee.role !== role) {
+          toast.error("you are not authorized to access...");
+        } else {
+          dispatch(setCredentials(res));
+          navigate("/dashboard");
+        }
+      })
+      .catch(() => {});
   };
 
   return (
@@ -37,6 +57,7 @@ function LoginForm({ role, title, subtitle }) {
           <label className="text-sm font-medium text-zinc-600">Email</label>
           <input
             name="email"
+            value={data.email}
             onChange={handleChange}
             type="email"
             placeholder="Enter your email"
@@ -53,6 +74,7 @@ function LoginForm({ role, title, subtitle }) {
           <input
             type={showPassword ? "text" : "password"}
             name="password"
+            value={data.password}
             onChange={handleChange}
             placeholder="Enter your password"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-300 
@@ -68,13 +90,21 @@ function LoginForm({ role, title, subtitle }) {
           </span>
         </div>
 
+        {/* ❌ Error Message */}
+        {isError && (
+          <p className="text-red-500 text-sm">
+            {error?.data?.message || "Login failed"}
+          </p>
+        )}
+
         {/* Button */}
         <Button
           type="submit"
+          disabled={isLoading}
           className="w-full py-5 rounded-lg bg-[#1E1A4D] text-white 
           hover:bg-[#2a2566] active:scale-[0.98] transition-all"
         >
-          Login
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
     </div>

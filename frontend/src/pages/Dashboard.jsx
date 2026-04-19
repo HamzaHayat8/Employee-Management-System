@@ -1,16 +1,15 @@
 import React, { useEffect } from "react";
-import { userdata } from "../assets/data";
 import Loader from "../components/common/Loading";
 import EmployeeDashboard from "./dashboard/EmployeeDashboard";
+import { useSelector } from "react-redux";
 
 function Dashboard() {
-  
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const userdata = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    const user = userdata.find((u) => u.id === 1); // or from login
-    setData(user);
+    setData(userdata);
     setLoading(false);
   }, []);
 
@@ -22,15 +21,13 @@ function Dashboard() {
     return <div>No data found</div>;
   }
 
-  console.log("data.role", data.role);
-
   if (data.role === "admin") {
-    return <div>Admin</div>;
+    return <div>{data.first_name}</div>;
   } else if (data.role === "employee") {
-    return <EmployeeDashboard />;
+    return <EmployeeDashboard data={data} />;
   }
 
-  return <div></div>;
+  // return <div></div>;
 }
 
 export default Dashboard;

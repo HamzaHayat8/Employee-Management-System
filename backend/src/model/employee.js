@@ -11,8 +11,15 @@ const employeeSchema = new mongoose.Schema(
       required: true,
     },
     phone: {
-      type: Number,
+      type: String,
       required: true,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return /^[\d\s\-\+\(\)]+$/.test(v);
+        },
+        message: "Invalid phone number format",
+      },
     },
     bio: {
       type: String,
@@ -26,17 +33,17 @@ const employeeSchema = new mongoose.Schema(
     basic_salary: {
       type: Number,
     },
-    allowances: {
-      type: Number,
-    },
-    deductions: {
-      type: Number,
-    },
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
+    },
+    deductions: {
+      type: Number,
+      min: [0, "Deductions cannot be negative"],
     },
     password: {
       type: String,
@@ -48,9 +55,7 @@ const employeeSchema = new mongoose.Schema(
       enum: ["admin", "employee"],
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 export default mongoose.model("Employee", employeeSchema);

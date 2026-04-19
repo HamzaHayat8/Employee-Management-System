@@ -66,5 +66,9 @@ export const updateTask = asyncHandler(async (req, res) => {
     { new: true },
   );
 
+  if (!task) {
+    return res.status(404).send({ message: "Task not found" });
+  }
+
   res.status(200).send({ message: "Task updated successfully", task });
 });

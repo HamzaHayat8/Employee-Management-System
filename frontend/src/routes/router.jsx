@@ -11,6 +11,7 @@ import Payslips from "../pages/Payslips";
 import Settings from "../pages/Settings";
 import TasksPage from "../pages/TasksPage";
 
+
 export const AppRouter = createBrowserRouter([
   {
     path: "/",

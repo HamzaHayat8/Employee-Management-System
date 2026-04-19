@@ -21,17 +21,21 @@ import {
   SelectValue,
 } from "../../components/common/select";
 import { IoIosAddCircle } from "react-icons/io";
+import { useRegisterMutation } from "../../services/auth/authApi";
+import { toast } from "react-hot-toast";
 
 export function AddEmployeeModal() {
+  const [register, { isLoading }] = useRegisterMutation();
+
   const [data, setData] = React.useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     phone: "",
-    joiningDate: "",
+    joining_date: "",
     bio: "",
     department: "",
     position: "",
-    basicSalary: "",
+    basic_salary: "",
     allowances: "",
     deductions: "",
     email: "",
@@ -44,10 +48,19 @@ export function AddEmployeeModal() {
     setData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleFormSubmit = (event) => {
-    event.preventDefault();
-    // Handle form submission logic here
-    console.log(data);
+  const handleFormSubmit = async (e) => {
+    
+    e.preventDefault();
+
+    try {
+      const res = await register(data).unwrap();
+
+      toast.success(res.message);
+
+      setData({});
+    } catch (err) {
+      toast.error(err?.data?.message || "Something went wrong");
+    }
   };
 
   return (
@@ -81,7 +94,7 @@ export function AddEmployeeModal() {
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
                     onChange={handleInputChange}
-                    name="firstName"
+                    name="first_name"
                     id="firstName"
                     placeholder="Enter first name"
                   />
@@ -90,7 +103,7 @@ export function AddEmployeeModal() {
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     onChange={handleInputChange}
-                    name="lastName"
+                    name="last_name"
                     id="lastName"
                     placeholder="Enter last name"
                   />
@@ -108,7 +121,7 @@ export function AddEmployeeModal() {
                   <Label htmlFor="joinDate">Join Date</Label>
                   <Input
                     onChange={handleInputChange}
-                    name="joinDate"
+                    name="joining_date"
                     id="joinDate"
                     type="date"
                   />
@@ -175,7 +188,7 @@ export function AddEmployeeModal() {
                       placeholder="0"
                       type="number"
                       onChange={handleInputChange}
-                      name="basicSalary"
+                      name="basic_salary"
                     />
                   </div>
                 </div>
@@ -227,8 +240,7 @@ export function AddEmployeeModal() {
                       onChange={handleInputChange}
                       id="password"
                       type="password"
-                      value="••••"
-                      readOnly
+                      placeholder="Enter temporary password"
                       className="bg-blue-50/50"
                     />
                   </div>
@@ -263,9 +275,10 @@ export function AddEmployeeModal() {
               </DialogClose>
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="bg-[#4831E2] hover:bg-[#4831E2]/90 px-8"
               >
-                Create Employee
+                {isLoading ? "Creating..." : "Create Employee"}
               </Button>
             </DialogFooter>
           </form>
