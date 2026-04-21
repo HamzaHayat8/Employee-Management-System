@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { User, Lock, Save } from "lucide-react";
 import { Button } from "../components/common/button";
 import { Input } from "../components/common/input";
@@ -10,8 +10,53 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/common/card";
+import { useSelector } from "react-redux";
+import { ChangePasswordModal } from "../components/dashboard/Changepassword";
+import { useUpdateEmployeeMutation } from "../services/employees/employee.api";
+import toast from "react-hot-toast";
 
 function Settings() {
+  const userdata = useSelector((state) => state.auth.user);
+  const [updateEmployee, { isLoading }] = useUpdateEmployeeMutation();
+
+  const [formData, setForm] = React.useState({
+    first_name: "",
+    email: "",
+    position: "",
+    bio: "",
+  });
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setForm((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  useEffect(() => {
+    if (userdata) {
+      setForm({
+        first_name: userdata.first_name || "",
+        email: userdata.email || "",
+        position: userdata.position || "",
+        bio: userdata.bio || "",
+      });
+    }
+  }, [userdata]);
+
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+      const res = await updateEmployee({
+        id: userdata._id,
+        ...formData,
+      }).unwrap();
+
+      toast.success(res.message || "Employee updated");
+    } catch (err) {
+      toast.error(err?.data?.message || "Update failed");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header Section */}
@@ -35,12 +80,14 @@ function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name Field */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">
-                Name
+              <Label htmlFor="first_name" className="text-sm font-medium">
+                First Name
               </Label>
               <Input
-                id="name"
-                defaultValue="Admin"
+                id="first_name"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleInputChange}
                 className="bg-slate-50/50"
               />
             </div>
@@ -52,6 +99,9 @@ function Settings() {
               </Label>
               <Input
                 id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 type="email"
                 defaultValue="admin@example.com"
                 className="bg-slate-50/50"
@@ -64,7 +114,13 @@ function Settings() {
             <Label htmlFor="position" className="text-sm font-medium">
               Position
             </Label>
-            <Input id="position" className="bg-slate-50/50" />
+            <Input
+              id="position"
+              name="position"
+              value={formData.position}
+              onChange={handleInputChange}
+              className="bg-slate-50/50"
+            />
           </div>
 
           {/* Bio Field */}
@@ -73,6 +129,9 @@ function Settings() {
               Bio
             </Label>
             <Textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
               id="bio"
               placeholder="Write a brief bio..."
               className="min-h-25 bg-slate-50/50"
@@ -84,7 +143,12 @@ function Settings() {
 
           {/* Save Button Container */}
           <div className="flex justify-end pt-4">
-            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white px-6 py-2 h-auto gap-2">
+            <Button
+              type="submit"
+              loading={isLoading}
+              onClick={handleFormSubmit}
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white px-6 py-2 h-auto gap-2"
+            >
               <Save className="w-4 h-4" />
               Save Changes
             </Button>
@@ -106,9 +170,7 @@ function Settings() {
               </p>
             </div>
           </div>
-          <Button variant="outline" className="text-sm border-slate-200">
-            Change
-          </Button>
+          <ChangePasswordModal />
         </CardContent>
       </Card>
     </div>

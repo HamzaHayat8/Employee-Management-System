@@ -23,6 +23,7 @@ import { toast } from "react-hot-toast";
 import { useUpdateEmployeeMutation } from "../../services/employees/employee.api";
 
 export function UpdateEmployeeModal({ openupdate, setOpenUpdate, employee }) {
+  
   const [updateEmployee, { isLoading }] = useUpdateEmployeeMutation();
 
   const [data, setData] = React.useState({

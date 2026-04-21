@@ -17,9 +17,9 @@ router.post("/apply", isAuth, applyForLeave);
 
 /*
 @desc get all leaves for an employee
-@route GET /api/leave
+@route GET /api/leave/leaves
 */
-router.get("/", isAuth, getLeaves);
+router.get("/leaves", isAuth, getLeaves);
 
 /*@desc get all leaves for an employee for admin 
 @route GET /api/leave/all

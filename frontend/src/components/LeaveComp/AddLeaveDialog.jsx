@@ -15,12 +15,51 @@ import { Input } from "../common/input";
 import { Label } from "../common/label";
 import { Button } from "../common/button";
 import { FaRegCalendar } from "react-icons/fa";
+import { useAddLeaveMutation } from "../../services/leave/leave.api";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 export function AddLeaveDialog() {
+  const [addLeave, { isLoading }] = useAddLeaveMutation();
+
+  const [formData, setFormData] = useState({
+    type: "",
+    startDate: "",
+    endDate: "",
+    reason: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await addLeave(formData).unwrap();
+
+      toast.success("Leave applied successfully");
+
+      // optional: reset form
+      setFormData({
+        type: "",
+        startDate: "",
+        endDate: "",
+        reason: "",
+      });
+    } catch (err) {
+      toast.error(err?.data?.message || "Failed to apply leave ❌");
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="px-6 py-3  bg-[#4831E2] hover:bg-[#4831E2]/90 flex items-center gap-2">
+        <Button className="px-6 py-3 bg-[#4831E2] flex items-center gap-2">
           <IoIosAddCircle />
           Add Leave
         </Button>
@@ -34,13 +73,15 @@ export function AddLeaveDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <FieldGroup>
             <Field>
               <Label>Leave Type</Label>
               <select
-                name="leaveType"
-                className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full border rounded-md p-2"
               >
                 <option value="">Select leave type</option>
                 <option value="sick">Sick Leave</option>
@@ -56,16 +97,29 @@ export function AddLeaveDialog() {
               </Label>
 
               <div className="flex gap-3">
-                <Input type="date" name="fromDate" />
-                <Input type="date" name="toDate" />
+                <Input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                />
+                <Input
+                  type="date"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                />
               </div>
             </Field>
 
             <Field>
               <Label>Reason</Label>
               <textarea
+                name="reason"
+                value={formData.reason}
+                onChange={handleChange}
                 rows={3}
-                className="w-full border rounded-md p-2 focus:ring-2 focus:ring-gray-300"
+                className="w-full border rounded-md p-2"
               />
             </Field>
           </FieldGroup>
@@ -77,8 +131,12 @@ export function AddLeaveDialog() {
               </Button>
             </DialogClose>
 
-            <Button type="submit" className="w-1/2 bg-[#4831E2]">
-              Submit
+            <Button
+              type="submit"
+              className="w-1/2 bg-[#4831E2]"
+              disabled={isLoading}
+            >
+              {isLoading ? "Submitting..." : "Submit"}
             </Button>
           </DialogFooter>
         </form>

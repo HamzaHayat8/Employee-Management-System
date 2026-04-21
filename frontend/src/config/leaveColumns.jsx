@@ -2,10 +2,10 @@ import { getStatusStyles } from "../utils/leaveUtils";
 
 export const LEAVE_COLUMNS = [
   {
-    header: "From",
-    key: "from",
+    header: "Employee",
+    key: "first_name",
     showFor: ["admin"],
-    render: (row) => row.duration.from,
+    render: (row) => row.employeeId?.first_name || "N/A",
   },
   {
     header: "Type",
@@ -13,10 +13,20 @@ export const LEAVE_COLUMNS = [
     showFor: ["admin", "employee"],
   },
   {
-    header: "Dates",
-    key: "dates",
-    showFor: ["admin", "employee"],
-    render: (row) => `${row.duration.from} - ${row.duration.to}`,
+    header: "Leave Duration",
+    key: "leaveDuration",
+    showFor: ["employee", "admin"],
+    render: (row) => {
+      const start = new Date(row.createdAt).toLocaleDateString();
+      const end = new Date(row.endDate).toLocaleDateString();
+
+      return (
+        <div className="flex flex-col">
+          <span>Start: {start}</span>
+          <span>End: {end}</span>
+        </div>
+      );
+    },
   },
   {
     header: "Reason",
@@ -28,9 +38,12 @@ export const LEAVE_COLUMNS = [
     key: "status",
     showFor: ["admin", "employee"],
     render: (row) => (
-      <span className={getStatusStyles(row.status)}>
-        {row.status}
-      </span>
+      <span className={getStatusStyles(row.status)}>{row.status}</span>
     ),
+  },
+  {
+    header: "Action",
+    key: "action",
+    showFor: ["admin"],
   },
 ];

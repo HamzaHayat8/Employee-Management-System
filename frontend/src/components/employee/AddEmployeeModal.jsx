@@ -49,7 +49,6 @@ export function AddEmployeeModal() {
   };
 
   const handleFormSubmit = async (e) => {
-    
     e.preventDefault();
 
     try {
@@ -157,13 +156,12 @@ export function AddEmployeeModal() {
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Itdepartment">
+                      <SelectItem value="It_Department">
                         IT Department
                       </SelectItem>
-                      <SelectItem value="humanresources">
-                        Human Resources
-                      </SelectItem>
+                      <SelectItem value="engineering">Engineering</SelectItem>
                       <SelectItem value="sales">Sales</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

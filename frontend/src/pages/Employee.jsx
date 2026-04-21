@@ -65,7 +65,8 @@ function Employee() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Departments</SelectItem>
-            <SelectItem value="Engineering">Engineering</SelectItem>
+            <SelectItem value="engineering">Engineering</SelectItem>
+            <SelectItem value="It_Department">IT Department</SelectItem>
             <SelectItem value="Marketing">Marketing</SelectItem>
             <SelectItem value="sales">Sales</SelectItem>
           </SelectContent>

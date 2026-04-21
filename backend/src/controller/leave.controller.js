@@ -28,7 +28,9 @@ export const applyForLeave = asyncHandler(async (req, res) => {
 */
 export const getLeaves = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const leaves = await leave.find({ employeeId: userId });
+  const leaves = await leave
+    .find({ employeeId: userId })
+    .populate("employeeId", "role");
   res.status(200).send({ message: "Leaves retrieved successfully", leaves });
 });
 
@@ -36,7 +38,7 @@ export const getLeaves = asyncHandler(async (req, res) => {
 @desc get all leaves for an employee for admin 
 */
 export const getAllLeaves = asyncHandler(async (req, res) => {
-  const leaves = await leave.find().populate("employeeId", "name email");
+  const leaves = await leave.find().populate("employeeId", "role first_name");
   if (!leaves) {
     return res.status(404).send({ message: "No leaves found" });
   }
