@@ -8,14 +8,7 @@ export const generatePayslip = asyncHandler(async (req, res) => {
   const { employeeId, month, year, basicSalary, allowances, deductions } =
     req.body;
 
-  if (
-    !employeeId ||
-    !month ||
-    !year ||
-    !basicSalary ||
-    !allowances ||
-    !deductions
-  ) {
+  if (!employeeId || !month || !year || !basicSalary) {
     return res.status(400).send({ message: "All fields are required" });
   }
 
@@ -49,7 +42,10 @@ export const getPayslip = asyncHandler(async (req, res) => {
 @route GET /api/payslip/all
 */
 export const getAllPayslips = asyncHandler(async (req, res) => {
-  const payslips = await Payslip.find().populate("employeeId", "name email");
+  const payslips = await Payslip.find().populate(
+    "employeeId",
+    "first_name last_name ",
+  );
   if (!payslips) {
     return res.status(404).send({ message: "No payslips found" });
   }

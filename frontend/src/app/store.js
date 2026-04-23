@@ -4,6 +4,8 @@ import authReducer from "../features/auth/authSlice";
 import { authApi } from "../services/auth/authApi";
 import { employeeApi } from "../services/employees/employee.api";
 import { leaveApi } from "../services/leave/leave.api";
+import { payslipApi } from "../services/payslip/payslip.api";
+// import employeeReducer from "../features/employee/employeeSlice";
 
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
@@ -20,15 +22,18 @@ const persistedAuthReducer = persistReducer(persistConfig, authReducer);
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
+    // employee: employeeReducer,
     [authApi.reducerPath]: authApi.reducer,
     [employeeApi.reducerPath]: employeeApi.reducer,
     [leaveApi.reducerPath]: leaveApi.reducer,
+    [payslipApi.reducerPath]: payslipApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       authApi.middleware,
       employeeApi.middleware,
       leaveApi.middleware,
+      payslipApi.middleware,
     ),
 });
 

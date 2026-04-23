@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Search } from "lucide-react";
 import { Input } from "../components/common/input";
 import { AddEmployeeModal } from "../components/employee/AddEmployeeModal";

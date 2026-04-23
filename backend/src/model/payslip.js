@@ -18,14 +18,17 @@ const payslipSchema = new mongoose.Schema(
     basicSalary: {
       type: Number,
       required: true,
+      min: 0,
     },
     allowances: {
       type: Number,
       required: true,
+      min: 0,
     },
     deductions: {
       type: Number,
       required: true,
+      min: 0,
     },
   },
   { timestamps: true },
