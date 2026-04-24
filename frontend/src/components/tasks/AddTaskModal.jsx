@@ -22,16 +22,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../common/select";
+import { useCreateTaskMutation } from "../../services/taskes/task.api";
+import { useGetEmployeesQuery } from "../../services/employees/employee.api";
+import toast from "react-hot-toast";
 
 export default function AddTaskModal() {
+  const [createTask, { isLoading }] = useCreateTaskMutation();
+  const { data: userdata } = useGetEmployeesQuery();
+
   const [task, setTask] = useState({
     title: "",
     description: "",
-    assignedTo: "",
+    employeeId: "",
     status: "pending",
     priority: "medium",
-    deadline: "",
-    progress: 0,
+    dueDate: "",
+    Progress: 0,
   });
 
   const handleChange = (e) => {
@@ -43,19 +49,31 @@ export default function AddTaskModal() {
     setTask((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Task Data:", task);
 
-    setTask({
-      title: "",
-      description: "",
-      assignedTo: "",
-      status: "pending",
-      priority: "medium",
-      deadline: "",
-      progress: 0,
-    });
+    try {
+      const payload = {
+        ...task,
+        Progress: Number(task.Progress), // ensure number
+        dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : null,
+      };
+      const res = await createTask(payload).unwrap();
+      toast.success(res.message || "Task created successfully");
+      console.log("Task created:", res);
+      setTask({
+        title: "",
+        description: "",
+        employeeId: "",
+        status: "pending",
+        priority: "medium",
+        dueDate: "",
+        Progress: 0,
+      });
+    } catch (err) {
+      console.error("Create task failed:", err);
+      toast.error(err.message || "Failed to create task.");
+    }
   };
 
   return (
@@ -102,18 +120,20 @@ export default function AddTaskModal() {
             <div className="space-y-2">
               <Label>Assign To</Label>
               <Select
-                value={task.assignedTo}
+                value={task.employeeId}
                 onValueChange={(value) =>
-                  handleSelectChange("assignedTo", value)
+                  handleSelectChange("employeeId", value)
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select employee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ali">Ali</SelectItem>
-                  <SelectItem value="ahmed">Ahmed</SelectItem>
-                  <SelectItem value="sara">Sara</SelectItem>
+                  {userdata?.data?.map((employee) => (
+                    <SelectItem key={employee._id} value={employee._id}>
+                      {employee.first_name} {employee.last_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -122,8 +142,8 @@ export default function AddTaskModal() {
               <Label>Deadline</Label>
               <Input
                 type="date"
-                name="deadline"
-                value={task.deadline}
+                name="dueDate"
+                value={task.dueDate ? task.dueDate.split("T")[0] : ""}
                 onChange={handleChange}
               />
             </div>
@@ -140,9 +160,9 @@ export default function AddTaskModal() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent >
+                <SelectContent>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
@@ -151,7 +171,6 @@ export default function AddTaskModal() {
             <div className="space-y-2">
               <Label>Priority</Label>
               <Select
-                
                 value={task.priority}
                 onValueChange={(value) => handleSelectChange("priority", value)}
               >
@@ -172,8 +191,8 @@ export default function AddTaskModal() {
             <Label>Progress (%)</Label>
             <Input
               type="number"
-              name="progress"
-              value={task.progress}
+              name="Progress"
+              value={task.Progress}
               onChange={handleChange}
               min={0}
               max={100}
@@ -183,9 +202,10 @@ export default function AddTaskModal() {
           {/* Submit */}
           <Button
             type="submit"
+            disabled={isLoading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
           >
-            Create Task
+            {isLoading ? "Creating..." : "Create Task"}
           </Button>
         </form>
       </DialogContent>

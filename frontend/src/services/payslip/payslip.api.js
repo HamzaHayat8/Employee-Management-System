@@ -20,6 +20,10 @@ export const payslipApi = createApi({
       query: () => "",
       providesTags: ["Payslip"],
     }),
+    getbyId: builder.query({
+      query: (_id) => `print/${_id}`,
+      providesTags: ["Payslip"],
+    }),
     getAllPayslips: builder.query({
       query: () => "all",
       providesTags: ["Payslip"],
@@ -30,5 +34,6 @@ export const payslipApi = createApi({
 export const {
   useGeneratePayslipMutation,
   useGetPayslipQuery,
+  useGetbyIdQuery,
   useGetAllPayslipsQuery,
 } = payslipApi;

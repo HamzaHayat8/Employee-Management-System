@@ -38,6 +38,21 @@ export const getPayslip = asyncHandler(async (req, res) => {
   res.status(200).send({ payslips: payslip });
 });
 
+/*@desc get payslip for an id
+@route GET /api/payslip/:_id
+*/
+export const getPayslipById = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const payslip = await Payslip.findById(id).populate(
+    "employeeId",
+    "first_name last_name email , position",
+  );
+  if (!payslip) {
+    return res.status(404).send({ message: "Payslip not found" });
+  }
+  res.status(200).send({ payslip });
+});
+
 /*@desc get all payslips for admin
 @route GET /api/payslip/all
 */

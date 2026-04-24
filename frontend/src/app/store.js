@@ -6,6 +6,7 @@ import { employeeApi } from "../services/employees/employee.api";
 import { leaveApi } from "../services/leave/leave.api";
 import { payslipApi } from "../services/payslip/payslip.api";
 // import employeeReducer from "../features/employee/employeeSlice";
+import { taskApi } from "../services/taskes/task.api";
 
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
@@ -27,6 +28,7 @@ export const store = configureStore({
     [employeeApi.reducerPath]: employeeApi.reducer,
     [leaveApi.reducerPath]: leaveApi.reducer,
     [payslipApi.reducerPath]: payslipApi.reducer,
+    [taskApi.reducerPath]: taskApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -34,6 +36,7 @@ export const store = configureStore({
       employeeApi.middleware,
       leaveApi.middleware,
       payslipApi.middleware,
+      taskApi.middleware,
     ),
 });
 

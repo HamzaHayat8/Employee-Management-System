@@ -24,7 +24,7 @@ import { useGetEmployeesQuery } from "../../services/employees/employee.api";
 import { useGeneratePayslipMutation } from "../../services/payslip/payslip.api";
 
 export function Generatepayslip() {
-  const { data: userdata, isLoading } = useGetEmployeesQuery();
+  const { data: userdata } = useGetEmployeesQuery();
 
   const [generatePayslip, { isLoading: loading }] =
     useGeneratePayslipMutation();

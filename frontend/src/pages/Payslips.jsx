@@ -8,6 +8,7 @@ import {
   useGetPayslipQuery,
 } from "../services/payslip/payslip.api";
 import { useSelector } from "react-redux";
+import { data, Link } from "react-router-dom";
 
 const TABLE_COLUMNS = [
   {
@@ -37,6 +38,7 @@ const TABLE_COLUMNS = [
 
 function Payslips() {
   const [month, setMonth] = React.useState("");
+  // const { data: employee } = useGetbyIdQuery();
 
   const userRole = useSelector((state) => state.auth.user.role);
 
@@ -148,7 +150,16 @@ function Payslips() {
                     } else if (col.key === "basicSalary") {
                       value = formatCurrency(Number(row.basicSalary));
                     } else if (col.key === "action") {
-                      value = <Button variant="link">Download</Button>;
+                      value = (
+                        <Button variant="link">
+                          <Link
+                            to={`/payroll/print/${row._id}`}
+                            target="_blank"
+                          >
+                            Download
+                          </Link>
+                        </Button>
+                      );
                     } else {
                       value = row[col.key];
                     }

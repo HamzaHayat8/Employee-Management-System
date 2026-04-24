@@ -5,6 +5,7 @@ import {
   generatePayslip,
   getPayslip,
   getAllPayslips,
+  getPayslipById,
 } from "../controller/payslip.controller.js";
 import { isAuth } from "../middleware/auth.middleare.js";
 
@@ -17,6 +18,11 @@ router.post("/generate", isAuth, generatePayslip);
 @route GET /api/payslip
 */
 router.get("/", isAuth, getPayslip);
+
+/*@desc get payslip for an employee
+@route GET /api/payslip/print/:id
+*/
+router.get("/print/:id", isAuth, getPayslipById);
 
 /*@desc get all payslips for an employee for admin 
 @route GET /api/payslip/all

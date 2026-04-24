@@ -10,7 +10,7 @@ import Leave from "../pages/Leave";
 import Payslips from "../pages/Payslips";
 import Settings from "../pages/Settings";
 import TasksPage from "../pages/TasksPage";
-
+import PrintPayslip from "../pages/PrintPayslip";
 
 export const AppRouter = createBrowserRouter([
   {
@@ -103,6 +103,15 @@ export const AppRouter = createBrowserRouter([
       {
         path: "",
         element: <Payslips />,
+      },
+    ],
+  },
+  {
+    path: "/payroll/print/:_id",
+    children: [
+      {
+        path: "",
+        element: <PrintPayslip />,
       },
     ],
   },
