@@ -1,13 +1,23 @@
+"use client";
+
+/* ===============================
+   task.api.js
+================================= */
+
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const taskApi = createApi({
   reducerPath: "taskApi",
+
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3000/api/task/",
     credentials: "include",
   }),
+
   tagTypes: ["Task"],
+
   endpoints: (builder) => ({
+    // Create Task
     createTask: builder.mutation({
       query: (data) => ({
         url: "create",
@@ -16,17 +26,27 @@ export const taskApi = createApi({
       }),
       invalidatesTags: ["Task"],
     }),
-    getTasks: builder.query({
-      query: () => "all",
+
+    // Get Employee Tasks
+    getEmployeeTasks: builder.query({
+      query: () => "empl",
       providesTags: ["Task"],
     }),
-    getTask: builder.query({
-      query: (_id) => `print/${_id}`,
-      providesTags: ["Task"],
+
+    // Update Task
+    updateTask: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `update/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Task"],
     }),
   }),
 });
 
-export const { useGetTasksQuery, useGetTaskQuery, useCreateTaskMutation } = taskApi;
-
-export default taskApi;
+export const {
+  useCreateTaskMutation,
+  useGetEmployeeTasksQuery,
+  useUpdateTaskMutation,
+} = taskApi;

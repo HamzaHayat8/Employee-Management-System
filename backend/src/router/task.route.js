@@ -7,23 +7,24 @@ import {
   updateTask,
   getTasksByEmployee,
 } from "../controller/task.controller.js";
+import { isAuth } from "../middleware/auth.middleare.js";
 
 /*
 @desc create a new task
 @route /api/task/create
 */
-router.post("/create", createTask);
+router.post("/create", isAuth, createTask);
 
 /*
 @desc get all tasks for an employee
-@route /api/task
+@route /api/task/empl
 */
-router.get("/", getTasksByEmployee);
+router.get("/empl", isAuth, getTasksByEmployee);
 
 /*
 @desc update task by id
 @route /api/task/update/:id
 */
-router.put("/update/:id", updateTask);
+router.put("/update/:id", isAuth, updateTask);
 
 export default router;

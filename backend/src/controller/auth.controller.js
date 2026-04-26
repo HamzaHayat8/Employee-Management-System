@@ -109,7 +109,7 @@ export const loginEmployee = asyncHandler(async (req, res) => {
     });
   }
 
-  const token = generateToken(existingEmployee._id);
+  const token = generateToken(existingEmployee);
 
   // ✅ Set cookie
   res.cookie("token", token, {
