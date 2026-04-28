@@ -42,6 +42,12 @@ export const taskApi = createApi({
       }),
       invalidatesTags: ["Task"],
     }),
+
+    // Get All Tasks (Admin)
+    getAllTasks: builder.query({
+      query: () => "all",
+      providesTags: ["Task"],
+    }),
   }),
 });
 
@@ -49,4 +55,5 @@ export const {
   useCreateTaskMutation,
   useGetEmployeeTasksQuery,
   useUpdateTaskMutation,
+  useGetAllTasksQuery,
 } = taskApi;

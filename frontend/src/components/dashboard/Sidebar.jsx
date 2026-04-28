@@ -7,10 +7,10 @@ import { NavLink } from "react-router-dom";
 import { Button } from "../common/button";
 import { CiLogout } from "react-icons/ci";
 import { LiaTasksSolid } from "react-icons/lia";
-import { userdata } from "../../assets/data";
+import { useSelector } from "react-redux";
 
 function Sidebar() {
-  const role = userdata.find((u) => u.id === 1)?.role || "employee";
+  const role = useSelector((state) => state.auth.user?.role);
 
   const sidebarNav = [
     {

@@ -6,6 +6,7 @@ import {
   createTask,
   updateTask,
   getTasksByEmployee,
+  getAllTasks,
 } from "../controller/task.controller.js";
 import { isAuth } from "../middleware/auth.middleare.js";
 
@@ -26,5 +27,11 @@ router.get("/empl", isAuth, getTasksByEmployee);
 @route /api/task/update/:id
 */
 router.put("/update/:id", isAuth, updateTask);
+
+/*
+@desc get all tasks (admin)
+@route /api/task/all
+*/
+router.get("/all", isAuth, getAllTasks);
 
 export default router;

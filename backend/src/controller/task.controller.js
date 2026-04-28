@@ -48,7 +48,11 @@ export const createTask = asyncHandler(async (req, res) => {
 export const getTasksByEmployee = asyncHandler(async (req, res) => {
   const employeeId = req.user._id;
 
-  const tasks = await Task.find({ employeeId });
+  const tasks = await Task.find({ employeeId }).populate(
+    "employeeId",
+    "name email role",
+  );
+
   if (!tasks) {
     return res
       .status(404)
@@ -64,8 +68,6 @@ export const getTasksByEmployee = asyncHandler(async (req, res) => {
 export const updateTask = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = req.user; // middleware se logged-in user
-
-  console.log("Updating task with ID:", user);
 
   const task = await Task.findById(id);
 
@@ -127,4 +129,33 @@ export const updateTask = asyncHandler(async (req, res) => {
     message: "Task updated successfully",
     task: updatedTask,
   });
+});
+
+/*@desc get All Tasks (Admin) 
+@route /api/task/all
+*/
+
+export const getAllTasks = asyncHandler(async (req, res) => {
+  // Only admin can access all tasks
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized access",
+    });
+  }
+  const tasks = await Task.find()
+    .populate("employeeId", "name email role first_name last_name")
+    .sort({
+      createdAt: -1,
+    });
+
+  if (!tasks) {
+    return res.status(404).send({ message: "No tasks found" });
+  }
+
+  if (tasks.length === 0) {
+    return res.status(404).send({ message: "No tasks found" });
+  }
+
+  res.status(200).send({ tasks });
 });

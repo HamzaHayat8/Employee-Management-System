@@ -14,7 +14,10 @@ import { Progress } from "../components/common/progress";
 import { Badge } from "../components/common/badge";
 import { getDeadlineInfo } from "../utils/DeadlineInfo";
 
-import { useGetEmployeeTasksQuery } from "../services/taskes/task.api";
+import {
+  useGetAllTasksQuery,
+  useGetEmployeeTasksQuery,
+} from "../services/taskes/task.api";
 
 import { ClipboardList, CheckCircle, Clock, Activity } from "lucide-react";
 
@@ -27,19 +30,41 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { useSelector } from "react-redux";
+
 export default function TasksPage() {
-  const { data: taskResponse, isLoading } = useGetEmployeeTasksQuery();
+  const role = useSelector((state) => state.auth.user?.role);
+
+  // Always call both hooks (React rule), but use conditionally
+  const { data: employeeResponse, isLoading: employeeLoading } =
+    useGetEmployeeTasksQuery();
+
+  const { data: allTaskResponse, isLoading: allTaskLoading } =
+    useGetAllTasksQuery();
 
   const [tasks, setTasks] = React.useState([]);
+
+  console.log("Employee Tasks:", tasks);
 
   const [open, setOpen] = React.useState(false);
   const [selectedTask, setSelectedTask] = React.useState(null);
 
+  // Decide which data to use
   React.useEffect(() => {
-    setTasks(taskResponse?.tasks || []);
-  }, [taskResponse]);
+    if (role === "admin") {
+      setTasks(allTaskResponse?.tasks || []);
+    } else {
+      setTasks(employeeResponse?.tasks || []);
+    }
+  }, [role, employeeResponse, allTaskResponse]);
+
+  const isLoading = role === "admin" ? allTaskLoading : employeeLoading;
 
   if (isLoading) return <Loader />;
+
+  /* ===============================
+     Stats
+  ================================= */
 
   const totalTasks = tasks.length;
 
@@ -86,7 +111,7 @@ export default function TasksPage() {
           <p className="text-sm text-gray-500">Track and manage tasks</p>
         </div>
 
-        <AddTaskModal />
+        {role === "admin" && <AddTaskModal />}
       </div>
 
       {/* Stats */}
@@ -136,6 +161,7 @@ export default function TasksPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tasks.map((task) => {
           const deadline = getDeadlineInfo(task.dueDate);
+
           return (
             <div
               key={task._id}
@@ -148,7 +174,11 @@ export default function TasksPage() {
                 <Badge>{task.status}</Badge>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-between">
+                <p className="text-xs text-gray-500 mr-2">
+                  {task?.employeeId?.first_name}
+                </p>
+
                 <Badge
                   className="text-white"
                   style={{
@@ -168,15 +198,18 @@ export default function TasksPage() {
                 <Progress value={task.Progress} />
               </div>
 
-              {/* Deadline */}
               <p
-                className={`text-xs ${deadline.isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}
+                className={`text-xs ${
+                  deadline.isOverdue
+                    ? "text-red-600 font-medium"
+                    : "text-gray-500"
+                }`}
               >
                 Deadline:
                 {task.dueDate
                   ? new Date(task.dueDate).toLocaleDateString()
                   : "N/A"}{" "}
-                {task.dueDate || task.s && (
+                {task.dueDate && (
                   <span className="ml-1">({deadline.text})</span>
                 )}
               </p>
@@ -186,11 +219,13 @@ export default function TasksPage() {
       </div>
 
       {/* Update Modal */}
-      <UpdateTaskModal
-        open={open}
-        setOpen={setOpen}
-        selectedTask={selectedTask}
-      />
+      {selectedTask && (
+        <UpdateTaskModal
+          open={open}
+          setOpen={setOpen}
+          selectedTask={selectedTask}
+        />
+      )}
     </div>
   );
 }
