@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,41 +24,116 @@ import { IoIosAddCircle } from "react-icons/io";
 import { useRegisterMutation } from "../../services/auth/authApi";
 import { toast } from "react-hot-toast";
 
+// Face Recognition
+import { captureFace, loadModels, startWebcam } from "../../utils/loadModels";
 export function AddEmployeeModal() {
   const [register, { isLoading }] = useRegisterMutation();
 
-  const [data, setData] = React.useState({
+  const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
+    email: "",
+    password: "",
     phone: "",
-    joining_date: "",
     bio: "",
     department: "",
     position: "",
     basic_salary: "",
     allowances: "",
     deductions: "",
-    email: "",
-    password: "",
-    role: "",
+    role: "employee",
+    allowedRadius: 100,
+    officeCoordinates: {
+      type: "Point",
+      coordinates: [74.3587, 31.5204], // Default: Lahore (Lng, Lat)
+    },
   });
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setData((prevData) => ({ ...prevData, [name]: value }));
+  // Face Recognition States
+  const [faceDescriptor, setFaceDescriptor] = useState(null);
+  const [faceImage, setFaceImage] = useState(null);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+
+  // Load Face-API Models
+  useEffect(() => {
+    loadModels().then(() => setIsLoadingModels(false));
+    // Cleanup webcam stream on unmount
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectChange = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Update Office Coordinates
+  const handleOfficeLocation = (lng, lat) => {
+    setFormData((prev) => ({
+      ...prev,
+      officeCoordinates: {
+        type: "Point",
+        coordinates: [parseFloat(lng) || 0, parseFloat(lat) || 0],
+      },
+    }));
+  };
+
+  // Form Submit
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
+    if (!faceDescriptor || faceDescriptor.length === 0) {
+      toast.error(
+        "Please capture the employee's face before creating account!",
+      );
+      return;
+    }
+
     try {
-      const res = await register(data).unwrap();
+      const payload = {
+        ...formData,
+        faceDescriptor,
+        officeCoordinates: formData.officeCoordinates,
+        allowedRadius: Number(formData.allowedRadius),
+      };
 
-      toast.success(res.message);
+      const res = await register(payload).unwrap();
 
-      setData({});
+      toast.success(res.message || "Employee created successfully!");
+
+      // Reset form after success
+      setFormData({
+        first_name: "",
+        last_name: "",
+        email: "",
+        password: "",
+        phone: "",
+        bio: "",
+        department: "",
+        position: "",
+        basic_salary: "",
+        allowances: "",
+        deductions: "",
+        role: "employee",
+        allowedRadius: 100,
+        officeCoordinates: { type: "Point", coordinates: [74.3587, 31.5204] },
+      });
+      setFaceDescriptor(null);
+      setFaceImage(null);
     } catch (err) {
-      toast.error(err?.data?.message || "Something went wrong");
+      toast.error(err?.data?.message || "Failed to create employee");
     }
   };
 
@@ -71,74 +146,131 @@ export function AddEmployeeModal() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-150 w-full max-h-[95vh] flex flex-col p-0 overflow-hidden">
-        {" "}
+      <DialogContent className="sm:max-w-225 w-full max-h-[95vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl font-bold">
             Add New Employee
           </DialogTitle>
           <DialogDescription>
-            Create a user account and employee profile
+            Create a new employee account with face recognition for attendance
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <form onSubmit={handleFormSubmit} className="space-y-6 pt-4">
-            {/* Section 1: Personal Information */}
+
+        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Face Recognition Section */}
+            <div className="p-4 border rounded-lg bg-white">
+              <h3 className="font-semibold text-sm text-gray-700 mb-3">
+                Face Registration (Required)
+              </h3>
+
+              {isLoadingModels ? (
+                <p className="text-amber-600">
+                  Loading face recognition models...
+                </p>
+              ) : (
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div>
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        startWebcam(videoRef, streamRef, setIsCapturing)
+                      }
+                      className="mb-3"
+                    >
+                      Start Camera
+                    </Button>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      className="w-72 border rounded-lg shadow-sm"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        captureFace(
+                          videoRef,
+                          canvasRef,
+                          setFaceDescriptor,
+                          setFaceImage,
+                        )
+                      }
+                      disabled={!isCapturing}
+                      className="mt-3 w-full bg-green-600 hover:bg-green-700"
+                    >
+                      Capture Face
+                    </Button>
+                  </div>
+
+                  <div>
+                    {faceImage && (
+                      <>
+                        <p className="text-green-600 font-medium mb-2">
+                          Captured Face:
+                        </p>
+                        <img
+                          src={faceImage}
+                          alt="Captured Face"
+                          className="w-72 border rounded-lg shadow-sm"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+
+            {/* Personal Information */}
             <div className="space-y-4 p-4 border rounded-lg bg-white">
               <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">
                 Personal Information
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="first_name">First Name</Label>
                   <Input
-                    onChange={handleInputChange}
                     name="first_name"
-                    id="firstName"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
                     placeholder="Enter first name"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="last_name">Last Name</Label>
                   <Input
-                    onChange={handleInputChange}
                     name="last_name"
-                    id="lastName"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
                     placeholder="Enter last name"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
-                    onChange={handleInputChange}
                     name="phone"
-                    id="phone"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="joinDate">Join Date</Label>
-                  <Input
+                    value={formData.phone}
                     onChange={handleInputChange}
-                    name="joining_date"
-                    id="joinDate"
-                    type="date"
+                    placeholder="Enter phone number"
+                    required
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio (Optional)</Label>
                 <Textarea
-                  onChange={handleInputChange}
                   name="bio"
-                  id="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
                   placeholder="Brief description..."
-                  className="resize-none"
                 />
               </div>
             </div>
 
-            {/* Section 2: Employment Details */}
+            {/* Employment Details */}
             <div className="space-y-4 p-4 border rounded-lg bg-white">
               <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">
                 Employment Details
@@ -147,133 +279,154 @@ export function AddEmployeeModal() {
                 <div className="space-y-2">
                   <Label>Department</Label>
                   <Select
-                    value={data.department}
-                    onValueChange={(value) =>
-                      setData((prev) => ({ ...prev, department: value }))
+                    value={formData.department}
+                    onValueChange={(val) =>
+                      handleSelectChange("department", val)
                     }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="It_Department">
+                      <SelectItem value="IT_Department">
                         IT Department
                       </SelectItem>
-                      <SelectItem value="engineering">Engineering</SelectItem>
-                      <SelectItem value="sales">Sales</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="Engineering">Engineering</SelectItem>
+                      <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="position">Position</Label>
                   <Input
                     name="position"
+                    value={formData.position}
                     onChange={handleInputChange}
-                    id="position"
                     placeholder="Enter position"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="salary">Basic Salary</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-gray-500 text-sm">
-                      $
-                    </span>
-                    <Input
-                      id="salary"
-                      className="pl-7"
-                      placeholder="0"
-                      type="number"
-                      onChange={handleInputChange}
-                      name="basic_salary"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="allowances">Allowances</Label>
+                  <Label htmlFor="basic_salary">Basic Salary</Label>
                   <Input
-                    name="allowances"
+                    name="basic_salary"
+                    value={formData.basic_salary}
                     onChange={handleInputChange}
-                    id="allowances"
-                    placeholder="0"
                     type="number"
+                    placeholder="0"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="deductions">Deductions</Label>
+                  <Label htmlFor="allowedRadius">Allowed Radius (meters)</Label>
                   <Input
-                    name="deductions"
+                    name="allowedRadius"
+                    value={formData.allowedRadius}
                     onChange={handleInputChange}
-                    id="deductions"
-                    placeholder="0"
                     type="number"
+                    min="50"
+                    max="500"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Section 3: Account Setup */}
+            {/* Account Setup */}
             <div className="space-y-4 p-4 border rounded-lg bg-white">
               <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">
                 Account Setup
               </h3>
-              <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Work Email</Label>
                   <Input
-                    onChange={handleInputChange}
                     name="email"
-                    id="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     type="email"
-                    placeholder="admin@example.com"
-                    className="bg-blue-50/50"
+                    placeholder="employee@company.com"
+                    required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Temporary Password</Label>
-                    <Input
-                      name="password"
-                      onChange={handleInputChange}
-                      id="password"
-                      type="password"
-                      placeholder="Enter temporary password"
-                      className="bg-blue-50/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>System Role</Label>
-                    <Select
-                      value={data.role}
-                      onValueChange={(value) =>
-                        setData((prev) => ({ ...prev, role: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Role" />
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="employee">Employee</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Temporary Password</Label>
+                  <Input
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    type="password"
+                    placeholder="Enter temporary password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>System Role</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(val) => handleSelectChange("role", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="employee">Employee</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Office Location */}
+            <div className="space-y-4 p-4 border rounded-lg bg-white">
+              <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">
+                Office GPS Location
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Longitude</Label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    value={formData.officeCoordinates.coordinates[0]}
+                    onChange={(e) =>
+                      handleOfficeLocation(
+                        e.target.value,
+                        formData.officeCoordinates.coordinates[1],
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Latitude</Label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    value={formData.officeCoordinates.coordinates[1]}
+                    onChange={(e) =>
+                      handleOfficeLocation(
+                        formData.officeCoordinates.coordinates[0],
+                        e.target.value,
+                      )
+                    }
+                  />
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="flex gap-2 sm:justify-end border-t pt-4">
+            <DialogFooter className="flex gap-2 sm:justify-end border-t pt-6">
               <DialogClose asChild>
-                <Button variant="outline" type="button" className="px-8">
+                <Button variant="outline" type="button">
                   Cancel
                 </Button>
               </DialogClose>
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !faceDescriptor}
                 className="bg-[#4831E2] hover:bg-[#4831E2]/90 px-8"
               >
                 {isLoading ? "Creating..." : "Create Employee"}

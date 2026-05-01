@@ -2,36 +2,12 @@ import mongoose from "mongoose";
 
 const employeeSchema = new mongoose.Schema(
   {
-    first_name: {
-      type: String,
-      required: true,
-    },
-    last_name: {
-      type: String,
-      required: true,
-    },
+    first_name: { type: String, required: true, trim: true },
+    last_name: { type: String, required: true, trim: true },
     phone: {
       type: String,
       required: true,
       trim: true,
-      validate: {
-        validator: function (v) {
-          return /^[\d\s\-\+\(\)]+$/.test(v);
-        },
-        message: "Invalid phone number format",
-      },
-    },
-    bio: {
-      type: String,
-    },
-    department: {
-      type: String,
-    },
-    position: {
-      type: String,
-    },
-    basic_salary: {
-      type: Number,
     },
     email: {
       type: String,
@@ -39,21 +15,45 @@ const employeeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
     },
-    deductions: {
-      type: Number,
-      min: [0, "Deductions cannot be negative"],
-    },
-    password: {
-      type: String,
-      required: true,
-    },
+    password: { type: String, required: true },
     role: {
       type: String,
-      required: true,
       enum: ["admin", "employee"],
+      required: true,
     },
+
+    // === New Fields for Face + GPS Attendance ===
+    faceDescriptor: {
+      type: [Number], // Array of numbers (128 or 512 floats)
+      default: null,
+    },
+
+    officeCoordinates: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        default: [0, 0],
+      },
+    },
+
+    allowedRadius: {
+      type: Number,
+      default: 100, // in meters
+      min: 10,
+      max: 500,
+    },
+
+    // Other existing fields...
+    bio: String,
+    department: String,
+    position: String,
+    basic_salary: Number,
+    deductions: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

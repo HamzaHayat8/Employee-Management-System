@@ -43,4 +43,11 @@ app.use("/api/payslip", payslip);
 import task from "./src/router/task.route.js";
 app.use("/api/task", task);
 
+/*
+@desc attendance routes
+@route /api/attendance
+*/
+import attendance from "./src/router/attendanceRoutes.js";
+app.use("/api/attendance", attendance);
+
 export default app;
