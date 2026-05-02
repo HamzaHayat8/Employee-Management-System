@@ -2,8 +2,16 @@ import mongoose from "mongoose";
 
 const employeeSchema = new mongoose.Schema(
   {
-    first_name: { type: String, required: true, trim: true },
-    last_name: { type: String, required: true, trim: true },
+    first_name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    last_name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     phone: {
       type: String,
       required: true,
@@ -16,19 +24,23 @@ const employeeSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: true,
+    },
     role: {
       type: String,
-      enum: ["admin", "employee"],
+      enum: ["admin", "employee", "manager"], // Added manager if needed
       required: true,
     },
 
-    // === New Fields for Face + GPS Attendance ===
+    // === Face Recognition ===
     faceDescriptor: {
-      type: [Number], // Array of numbers (128 or 512 floats)
+      type: [Number], // Array of numbers (128 or 512 floats from face-api.js)
       default: null,
     },
 
+    // === GPS Office Location ===
     officeCoordinates: {
       type: {
         type: String,
@@ -44,18 +56,23 @@ const employeeSchema = new mongoose.Schema(
     allowedRadius: {
       type: Number,
       default: 100, // in meters
-      min: 10,
-      max: 500,
+      min: [10, "Minimum radius is 10 meters"],
+      max: [500, "Maximum radius is 500 meters"],
     },
 
-    // Other existing fields...
-    bio: String,
+    // Other fields
+    bio: { type: String, default: "" },
     department: String,
     position: String,
-    basic_salary: Number,
+    basic_salary: { type: Number, default: 0 },
+    allowances: { type: Number, default: 0 },
     deductions: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
+
+// Optional: Index for faster queries
+employeeSchema.index({ email: 1 });
+employeeSchema.index({ "officeCoordinates.coordinates": "2dsphere" }); // For geospatial queries
 
 export default mongoose.model("Employee", employeeSchema);

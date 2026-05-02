@@ -20,9 +20,11 @@ export const createEmployee = asyncHandler(async (req, res) => {
     allowances,
     deductions,
     role,
+    faceDescriptor, // Array from frontend
+    officeCoordinates,
+    allowedRadius,
   } = req.body;
 
-  // ✅ Validate required fields
   if (!first_name || !last_name || !email || !password || !phone || !role) {
     return res.status(400).json({
       success: false,
@@ -30,10 +32,8 @@ export const createEmployee = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ Normalize email
-  const normalizedEmail = email.toLowerCase();
+  const normalizedEmail = email.toLowerCase().trim();
 
-  // ✅ Check existing employee
   const existingEmployee = await employee.findOne({ email: normalizedEmail });
 
   if (existingEmployee) {
@@ -43,16 +43,20 @@ export const createEmployee = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ Hash password
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  // ✅ Create employee
+  // Office Coordinates
+  const finalOfficeCoords =
+    officeCoordinates?.coordinates?.length === 2
+      ? { type: "Point", coordinates: officeCoordinates.coordinates }
+      : { type: "Point", coordinates: [0, 0] };
+
   const newEmployee = await employee.create({
-    first_name,
-    last_name,
+    first_name: first_name.trim(),
+    last_name: last_name.trim(),
     email: normalizedEmail,
     password: hashedPassword,
-    phone,
+    phone: phone.trim(),
     bio,
     department,
     position,
@@ -60,11 +64,14 @@ export const createEmployee = asyncHandler(async (req, res) => {
     allowances,
     deductions,
     role,
+    faceDescriptor: Array.isArray(faceDescriptor) ? faceDescriptor : null,
+    officeCoordinates: finalOfficeCoords,
+    allowedRadius: Number(allowedRadius) || 100,
   });
 
-  // ✅ Remove password before sending response
   const employeeResponse = newEmployee.toObject();
   delete employeeResponse.password;
+  delete employeeResponse.faceDescriptor; // Don't send back face data
 
   return res.status(201).json({
     success: true,

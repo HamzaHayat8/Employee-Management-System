@@ -4,14 +4,8 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const attendanceApi = createApi({
   reducerPath: "attendanceApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3000/api", // Change if your backend is on different URL
-    prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth?.token; // Assuming you have auth slice with token
-      if (token) {
-        headers.set("authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
+    baseUrl: "http://localhost:3000/api/attendance", // Change if your backend is on different URL
+    credentials: "include", // Include cookies for auth
   }),
 
   tagTypes: ["Attendance"],
@@ -20,7 +14,7 @@ export const attendanceApi = createApi({
     // Check In with GPS + Face
     checkIn: builder.mutation({
       query: (body) => ({
-        url: "/attendance/checkin",
+        url: "/checkin",
         method: "POST",
         body,
       }),
@@ -30,7 +24,7 @@ export const attendanceApi = createApi({
     // Check Out
     checkOut: builder.mutation({
       query: (body) => ({
-        url: "/attendance/checkout",
+        url: "/checkout",
         method: "POST",
         body,
       }),
@@ -39,13 +33,13 @@ export const attendanceApi = createApi({
 
     // Get My Attendance (for current employee)
     getMyAttendance: builder.query({
-      query: () => "/attendance/my-attendance",
+      query: () => "/my-attendance",
       providesTags: ["Attendance"],
     }),
 
     // Get Today's Attendance Status
     getTodayAttendance: builder.query({
-      query: () => "/attendance/today",
+      query: () => "/today",
       providesTags: ["Attendance"],
     }),
   }),

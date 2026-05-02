@@ -2,20 +2,38 @@ import Attendance from "../model/Attendance.js";
 import Employee from "../model/employee.js";
 import geolib from "geolib";
 import { asyncHandler } from "../util/asyncHandler.js";
+import { faceDistance } from "../util/faceDistance.js";
 
-// @desc   Mark Check-In with GPS + Face
-// @route  POST /api/attendance/checkin
+/*
+@desc   Mark Check-In with GPS + Face Verification
+@route  POST /api/attendance/checkin
+*/
 export const checkIn = asyncHandler(async (req, res) => {
-  const { employeeId } = req.user._id; // Assuming employeeId is in JWT token
-  const { latitude, longitude, faceImage } = req.body; // faceImage = base64 or URL
+  const employeeId = req.user._id; // From protect middleware (JWT)
+  const { latitude, longitude, faceDescriptor } = req.body;
+
+  if (!latitude || !longitude || !faceDescriptor) {
+    return res.status(400).json({
+      success: false,
+      message: "Location and face descriptor are required",
+    });
+  }
 
   const employee = await Employee.findById(employeeId);
-  if (!employee)
+  if (!employee) {
     return res
       .status(404)
       .json({ success: false, message: "Employee not found" });
+  }
 
-  // 1. GPS Check
+  if (!employee.faceDescriptor) {
+    return res.status(400).json({
+      success: false,
+      message: "Face not registered. Please contact admin.",
+    });
+  }
+
+  // ====================== GPS Check ======================
   const officePoint = {
     latitude: employee.officeCoordinates.coordinates[1],
     longitude: employee.officeCoordinates.coordinates[0],
@@ -25,45 +43,48 @@ export const checkIn = asyncHandler(async (req, res) => {
 
   const distance = geolib.getDistance(officePoint, employeePoint);
 
-  if (distance > employee.allowedRadius) {
-    return res.status(403).json({
+  // if (distance > (employee.allowedRadius || 100)) {
+  //   return res.status(403).json({
+  //     success: false,
+  //     message: `You are outside office premises. Distance: ${Math.round(distance)}m`,
+  //   });
+  // }
+
+  // ====================== Face Verification ======================
+  const distanceScore = faceDistance(faceDescriptor, employee.faceDescriptor);
+  const faceVerified = distanceScore < 0.6; // Adjust threshold if needed (0.5 = stricter)
+
+  if (!faceVerified) {
+    return res.status(401).json({
       success: false,
-      message: `You are outside office premises. Distance: ${Math.round(distance)}m`,
+      message:
+        "Face verification failed. Face does not match registered employee.",
+      distanceScore: distanceScore.toFixed(4),
     });
   }
 
-  // 2. Face Verification (Recommended: Do this on Frontend with face-api.js)
-  // If you send face descriptor from frontend:
-  let faceVerified = false;
-  if (req.body.faceDescriptor && employee.faceDescriptor) {
-    const distanceScore = faceApiEuclideanDistance(
-      req.body.faceDescriptor,
-      employee.faceDescriptor,
-    );
-    faceVerified = distanceScore < 0.6; // Threshold (lower = stricter)
-  }
-
-  // Create attendance record
+  // ====================== Create Attendance ======================
   const today = new Date().setHours(0, 0, 0, 0);
 
-  let attendance = await Attendance.findOne({
+  const existingAttendance = await Attendance.findOne({
     employee: employeeId,
     date: today,
   });
 
-  if (attendance) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Already checked in today" });
+  if (existingAttendance) {
+    return res.status(400).json({
+      success: false,
+      message: "You have already checked in today",
+    });
   }
 
-  attendance = await Attendance.create({
+  const attendance = await Attendance.create({
     employee: employeeId,
+    date: today,
     checkInTime: new Date(),
     checkInLocation: { type: "Point", coordinates: [longitude, latitude] },
     checkInDistance: distance,
-    faceVerified,
-    faceImage, // store URL if uploaded
+    faceVerified: true,
     status: "present",
   });
 
@@ -72,13 +93,16 @@ export const checkIn = asyncHandler(async (req, res) => {
     message: "Check-in successful",
     data: attendance,
     distance: Math.round(distance),
-    faceVerified,
+    faceVerified: true,
   });
 });
 
-// Similar function for checkOut (update existing record)
+/*
+@desc   Check Out
+@route  POST /api/attendance/checkout
+*/
 export const checkOut = asyncHandler(async (req, res) => {
-  const { employeeId } = req.user._id; // Assuming employeeId is in JWT token
+  const employeeId = req.user._id;
   const today = new Date().setHours(0, 0, 0, 0);
 
   const attendance = await Attendance.findOne({
@@ -87,17 +111,68 @@ export const checkOut = asyncHandler(async (req, res) => {
   });
 
   if (!attendance) {
-    return res
-      .status(404)
-      .json({ success: false, message: "No check-in record found" });
+    return res.status(404).json({
+      success: false,
+      message: "No check-in record found for today",
+    });
+  }
+
+  if (attendance.checkOutTime) {
+    return res.status(400).json({
+      success: false,
+      message: "You have already checked out today",
+    });
   }
 
   attendance.checkOutTime = new Date();
   await attendance.save();
 
-  res.json({
+  res.status(200).json({
     success: true,
     message: "Check-out successful",
     data: attendance,
+  });
+});
+
+// aaaaaaaa
+export const getMyAttendance = asyncHandler(async (req, res) => {
+  const employeeId = req.user._id;
+
+  if (!employeeId) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const attendance = await Attendance.find({ employee: employeeId })
+    .sort({ date: -1 }) // Latest first
+    .limit(90); // Last 3 months (adjust as needed)
+
+  res.status(200).json({
+    success: true,
+    count: attendance.length,
+    data: attendance,
+  });
+});
+
+// ====================== NEW: Get Today's Attendance Status ======================
+export const getTodayAttendance = asyncHandler(async (req, res) => {
+  const employeeId = req.user._id;
+  const today = new Date().setHours(0, 0, 0, 0);
+
+  const todayAttendance = await Attendance.findOne({
+    employee: employeeId,
+    date: today,
+  });
+
+  if (!todayAttendance) {
+    return res.status(200).json({
+      success: true,
+      data: null,
+      message: "No attendance record for today yet",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: todayAttendance,
   });
 });
