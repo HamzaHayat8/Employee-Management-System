@@ -21,7 +21,7 @@ const attendanceSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["present", "late", "half-day", "absent"],
+      enum: ["present", "late", "absent"],
       default: "present",
     },
     // GPS Location (Office + Employee)

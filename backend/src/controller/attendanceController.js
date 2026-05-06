@@ -9,8 +9,8 @@ import { faceDistance } from "../util/faceDistance.js";
 @route  POST /api/attendance/checkin
 */
 export const checkIn = asyncHandler(async (req, res) => {
-  const employeeId = req.user._id; // From protect middleware (JWT)
-  const { latitude, longitude, faceDescriptor } = req.body;
+  const employeeId = req.user._id;
+  const { latitude, longitude, faceDescriptor, status } = req.body;
 
   if (!latitude || !longitude || !faceDescriptor) {
     return res.status(400).json({
@@ -24,6 +24,18 @@ export const checkIn = asyncHandler(async (req, res) => {
     return res
       .status(404)
       .json({ success: false, message: "Employee not found" });
+  }
+
+  //  ====================== Time Check ======================
+  const now = new Date();
+
+  const officeStartTime = new Date();
+  officeStartTime.setHours(9, 0, 0, 0);
+
+  let attendanceStatus = "present";
+
+  if (now > officeStartTime) {
+    attendanceStatus = "late";
   }
 
   if (!employee.faceDescriptor) {
@@ -52,7 +64,7 @@ export const checkIn = asyncHandler(async (req, res) => {
 
   // ====================== Face Verification ======================
   const distanceScore = faceDistance(faceDescriptor, employee.faceDescriptor);
-  const faceVerified = distanceScore < 0.6; // Adjust threshold if needed (0.5 = stricter)
+  const faceVerified = distanceScore < 0.6;
 
   if (!faceVerified) {
     return res.status(401).json({
@@ -85,7 +97,7 @@ export const checkIn = asyncHandler(async (req, res) => {
     checkInLocation: { type: "Point", coordinates: [longitude, latitude] },
     checkInDistance: distance,
     faceVerified: true,
-    status: "present",
+    status: attendanceStatus,
   });
 
   res.status(201).json({

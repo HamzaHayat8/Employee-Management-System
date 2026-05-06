@@ -9,13 +9,14 @@ import {
 } from "../services/payslip/payslip.api";
 import { useSelector } from "react-redux";
 import { data, Link } from "react-router-dom";
+import { getPayslipAmount } from "../utils/PayslipAmount";
 
 const TABLE_COLUMNS = [
   {
     header: "Name",
     key: "name",
     showFor: ["admin"],
-    render: (row) => `${row.employeeId.first_name}`,
+    render: (row) => `${row.employeeId?.first_name}`,
   },
   { header: "Period", key: "period", showFor: ["admin", "employee"] },
 
@@ -28,8 +29,7 @@ const TABLE_COLUMNS = [
   {
     header: "Net Salary",
     key: "netSalary",
-    render: (row) =>
-      Number(row.basicSalary) + Number(row.allowances) - Number(row.deductions),
+    render: (row) => getPayslipAmount(row),
     showFor: ["admin", "employee"],
   },
 

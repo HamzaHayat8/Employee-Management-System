@@ -26,8 +26,6 @@ function Dashboard() {
   } else if (data.role === "employee") {
     return <EmployeeDashboard data={data} />;
   }
-
-  // return <div></div>;
 }
 
 export default Dashboard;

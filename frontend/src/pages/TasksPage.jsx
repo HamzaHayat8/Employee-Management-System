@@ -44,7 +44,6 @@ export default function TasksPage() {
 
   const [tasks, setTasks] = React.useState([]);
 
-  console.log("Employee Tasks:", tasks);
 
   const [open, setOpen] = React.useState(false);
   const [selectedTask, setSelectedTask] = React.useState(null);

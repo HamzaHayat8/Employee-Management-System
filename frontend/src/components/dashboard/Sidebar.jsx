@@ -10,7 +10,7 @@ import { LiaTasksSolid } from "react-icons/lia";
 import { useSelector } from "react-redux";
 
 function Sidebar() {
-  const role = useSelector((state) => state.auth.user?.role);
+  const role = useSelector((state) => state.auth.user);
 
   const sidebarNav = [
     {
@@ -57,7 +57,9 @@ function Sidebar() {
     },
   ];
 
-  const filteredNav = sidebarNav.filter((item) => item.roles.includes(role));
+  const filteredNav = sidebarNav.filter((item) =>
+    item.roles.includes(role ? role.role : null),
+  );
 
   return (
     <div className="h-screen flex flex-col bg-linear-to-b from-[#1E1A4D] to-[#1E1A4D]/90 min-w-65">
@@ -75,11 +77,15 @@ function Sidebar() {
         {/* user info */}
         <div className="border rounded-sm w-full p-2 flex bg-[#171E31] items-center space-x-4">
           <div className="border px-3 py-1 rounded-md">
-            <span className="text-zinc-300 text-xl">H</span>
+            <span className="text-zinc-300 text-xl">
+              {role?.first_name.charAt(0).toUpperCase()}
+            </span>
           </div>
           <div>
-            <h1 className="text-white text-sm">Hamza Hayat</h1>
-            <p className="text-sm text-zinc-400">Admin</p>
+            <h1 className="text-white text-sm">
+              {role?.first_name.toUpperCase()}
+            </h1>
+            <p className="text-sm text-zinc-400">{role?.role.toUpperCase()}</p>
           </div>
         </div>
 
