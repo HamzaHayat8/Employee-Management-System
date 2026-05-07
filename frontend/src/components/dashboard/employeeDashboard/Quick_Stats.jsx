@@ -1,4 +1,4 @@
-import { ClockIcon, Paperclip } from "lucide-react";
+import { Check, ClockIcon, Paperclip } from "lucide-react";
 import React from "react";
 
 function Quick_Stats({ tasks, leaves, checkedIn }) {
@@ -39,7 +39,7 @@ function Quick_Stats({ tasks, leaves, checkedIn }) {
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                {/* <Combine/> */}
+                <Check />
               </div>
               <div>
                 <p class="text-sm text-gray-600">Completed Tasks</p>

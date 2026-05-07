@@ -8,7 +8,7 @@ import {
   useGetPayslipQuery,
 } from "../services/payslip/payslip.api";
 import { useSelector } from "react-redux";
-import { data, Link } from "react-router-dom";
+import {  Link } from "react-router-dom";
 import { getPayslipAmount } from "../utils/PayslipAmount";
 
 const TABLE_COLUMNS = [

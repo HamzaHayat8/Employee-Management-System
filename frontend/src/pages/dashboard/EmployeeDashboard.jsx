@@ -57,7 +57,7 @@ function EmployeeDashboard({ data }) {
   // Leaves summary
 
   // Latest Payslip summary
-  const latestPayslipAmount = getPayslipAmount(latestPayslip);
+  const latestPayslipAmount = getPayslipAmount(latestPayslip?.payslips[0]);
   // Latest Payslip summary
 
   // console.log("Latest  attendanceHistory:", attendanceHistory);
@@ -110,7 +110,7 @@ function EmployeeDashboard({ data }) {
             {/* My Tasks */}
 
             {/* Time Tracking */}
-            <Time_Tracking />
+            <Time_Tracking checkedIn={checkedIn} />
             {/* Time Tracking */}
           </div>
 
